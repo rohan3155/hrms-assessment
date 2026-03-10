@@ -1,12 +1,12 @@
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.orm import relationship
 from app.database import Base
 
 class Attendance(Base):
         __tablename__ = "attendances"
         
-        id = Column(Integer, primary_key=True, index=True)
-        employee_id = Column(Integer)
+        id = Column(Integer, primary_key=True, autoincrement=True, index=True)
+        employee_id = Column(Integer, ForeignKey("employees.id"))
         employee = relationship("Employee", back_populates="attendances")
         date = Column(String)
         check_in = Column(String)

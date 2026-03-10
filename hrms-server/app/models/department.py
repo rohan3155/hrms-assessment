@@ -4,6 +4,6 @@ from app.database import Base
 
 class Department(Base):
         __tablename__ = "departments"
-        id = Column(Integer, primary_key=True, index=True)
+        id = Column(Integer, primary_key=True, autoincrement=True, index=True)
         name = Column(String)
         employees = relationship("Employee", back_populates="department")
