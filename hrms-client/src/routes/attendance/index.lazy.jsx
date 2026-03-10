@@ -14,24 +14,23 @@ export const Route = createLazyFileRoute('/attendance/')({
 	component: RouteComponent,
 })
 
-// Format a backend ISO datetime string like "2026-03-10T08:16:32.482705" 
-// to a localized readable format "Mar 10, 2026, 8:16 AM"
-const formatDateTime = (isoString) => {
-    if (!isoString) return "—"
+
+const formatDateTime = (dateStr, timeStr) => {
+    if (!timeStr) return "—";
     try {
-        const date = new Date(isoString)
-        return new Intl.DateTimeFormat('en-US', {
-            month: 'short',
-            day: 'numeric',
-            year: 'numeric',
-            hour: 'numeric',
-            minute: '2-digit',
-            hour12: true
-        }).format(date)
-    } catch(e) {
-        return isoString
+        const [y, m, d] = dateStr.split("-");
+        const [hour, min] = timeStr.split(":");
+        const date = new Date(y, m - 1, d, hour, min);
+
+        return new Intl.DateTimeFormat("en-US", {
+            hour: "numeric",
+            minute: "2-digit",
+            hour12: true,
+        }).format(date);
+    } catch (e) {
+        return timeStr;
     }
-}
+};
 
 function RouteComponent() {
 	const [dialogState, setDialogState] = useState({
@@ -71,7 +70,9 @@ function RouteComponent() {
             <div className="page-heading">
                 <div>
                     <p className="page-eyebrow">Organization</p>
-                    <h2 className="page-title text-zinc-900 dark:text-zinc-100">Attendance</h2>
+                    <h2 className="page-title text-zinc-900 dark:text-zinc-100">
+                        Attendance
+                    </h2>
                     <p className="page-description text-zinc-500 dark:text-zinc-400">
                         Manage employee attendance and shifts from one place.
                     </p>
@@ -81,12 +82,12 @@ function RouteComponent() {
                     type="button"
                     className="primary-btn"
                     onClick={() => {
-                        setApiError(null)
+                        setApiError(null);
                         setDialogState({
                             isOpen: true,
                             mode: "create",
                             record: null,
-                        })
+                        });
                     }}
                 >
                     Log attendance
@@ -96,46 +97,60 @@ function RouteComponent() {
             {apiError && <p className="text-red-500 mb-4">{apiError}</p>}
 
             {isError ? (
-                <p className="text-red-500">Error loading attendance records.</p>
+                <p className="text-red-500">
+                    Error loading attendance records.
+                </p>
             ) : (
                 <DataTable
                     columns={[
                         { key: "employee_id", label: "Emp ID", sortable: true },
-                        { 
-                            key: "date", 
-                            label: "Date", 
+                        {
+                            key: "date",
+                            label: "Date",
                             sortable: true,
                             render: (row) => {
-                                // Just format the YYYY-MM-DD cleanly using Date. UTC prevents off-by-1 timezone errors.
-                                const [y, m, d] = row.date.split('-')
-                                return new Date(y, m - 1, d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric'}) 
-                            }
+                                const [y, m, d] = row.date.split("-");
+                                return new Date(y, m - 1, d).toLocaleDateString(
+                                    "en-US",
+                                    {
+                                        month: "short",
+                                        day: "numeric",
+                                        year: "numeric",
+                                    },
+                                );
+                            },
                         },
-                        { 
-                            key: "check_in", 
+                        {
+                            key: "check_in",
                             label: "Check In",
                             sortable: true,
-                            render: (row) => formatDateTime(row.check_in)
+                            render: (row) =>
+                                formatDateTime(row.date, row.check_in),
                         },
-                        { 
-                            key: "check_out", 
+                        {
+                            key: "check_out",
                             label: "Check Out",
                             sortable: true,
-                            render: (row) => formatDateTime(row.check_out)
+                            render: (row) =>
+                                formatDateTime(row.date, row.check_out),
                         },
-                        { 
-                            key: "status", 
+                        {
+                            key: "status",
                             label: "Status",
                             sortable: true,
                             render: (row) => (
-                                <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border ${
-                                    row.status === 'checked-in' ? 'bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800' :
-                                    row.status === 'checked-out' ? 'bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800' :
-                                    'bg-zinc-100 text-zinc-800 border-zinc-200 dark:bg-zinc-800 dark:text-zinc-400 dark:border-zinc-700'
-                                }`}>
+                                <span
+                                    className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border ${
+                                        row.status === "checked-in"
+                                            ? "bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800"
+                                            : row.status === "checked-out"
+                                              ? "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800"
+                                              : "bg-zinc-100 text-zinc-800 border-zinc-200 dark:bg-zinc-800 dark:text-zinc-400 dark:border-zinc-700"
+                                    }`}
+                                >
                                     {row.status}
                                 </span>
-                            )
+                            ),
                         },
                     ]}
                     data={attendances}
@@ -145,8 +160,8 @@ function RouteComponent() {
                     sortKey={sortKey}
                     sortDir={sortDir}
                     onSortChange={(dir, key) => {
-                        setSortDir(dir)
-                        setSortKey(key)
+                        setSortDir(dir);
+                        setSortKey(key);
                     }}
                     page={page}
                     onPageChange={setPage}
@@ -158,12 +173,12 @@ function RouteComponent() {
                             <button
                                 className="text-indigo-600 dark:text-indigo-400 hover:underline"
                                 onClick={() => {
-                                    setApiError(null)
+                                    setApiError(null);
                                     setDialogState({
                                         isOpen: true,
                                         mode: "edit",
                                         record: row,
-                                    })
+                                    });
                                 }}
                             >
                                 Edit
@@ -178,7 +193,7 @@ function RouteComponent() {
                                             "Are you sure you want to delete this attendance record?",
                                         )
                                     ) {
-                                        deleteMutation.mutate(row.id)
+                                        deleteMutation.mutate(row.id);
                                     }
                                 }}
                             >
@@ -214,19 +229,19 @@ function RouteComponent() {
                                 onSuccess: closeDialog,
                                 onError: (error) => setApiError(error.message),
                             },
-                        )
+                        );
                     }}
                     onCreate={(attendance) => {
                         createMutation.mutate(attendance, {
                             onSuccess: closeDialog,
                             onError: (error) => {
-                                setApiError(error.message)
-                                closeDialog()
+                                setApiError(error.message);
+                                closeDialog();
                             },
-                        })
+                        });
                     }}
                 />
             </Dialog>
         </div>
-    )
+    );
 }
