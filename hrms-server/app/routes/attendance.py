@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from sqlalchemy import asc, desc
+from sqlalchemy import asc, desc, cast, String
 from app.database import get_db
 from app.models.attendance import Attendance
 from app.schemas.attendance import AttendanceCreate, AttendanceUpdate, AttendanceResponse, AttendancePaginatedResponse
@@ -22,11 +22,11 @@ async def read_attendances(
     
     if search:
         query = query.filter(
-            (Attendance.date.ilike(f"%{search}%")) |
-            (Attendance.check_in.ilike(f"%{search}%")) |
-            (Attendance.check_out.ilike(f"%{search}%")) |
+            (cast(Attendance.date, String).ilike(f"%{search}%")) |
+            (cast(Attendance.check_in, String).ilike(f"%{search}%")) |
+            (cast(Attendance.check_out, String).ilike(f"%{search}%")) |
             (Attendance.status.ilike(f"%{search}%")) |
-            (Attendance.employee_id.ilike(f"%{search}%"))
+            (cast(Attendance.employee_id, String).ilike(f"%{search}%"))
         )
     
     sort_column = getattr(Attendance, sort_by, Attendance.id)

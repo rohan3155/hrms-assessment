@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from sqlalchemy import asc, desc
+from sqlalchemy import asc, desc, cast, String
 from app.database import get_db
 from app.models.employee import Employee
 from app.schemas.employee import EmployeeCreate, EmployeeUpdate, EmployeeResponse, EmployeePaginatedResponse
@@ -23,8 +23,8 @@ async def read_employees(
         query = query.filter(
             (Employee.full_name.ilike(f"%{search}%")) |
             (Employee.email.ilike(f"%{search}%")) |
-            (Employee.employee_id.ilike(f"%{search}%")) |
-            (Employee.department_id.ilike(f"%{search}%"))
+            (cast(Employee.employee_id, String).ilike(f"%{search}%")) |
+            (cast(Employee.department_id, String).ilike(f"%{search}%"))
         )
     
     sort_column = getattr(Employee, sort_by, Employee.id)
