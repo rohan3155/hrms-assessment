@@ -5,62 +5,60 @@ import Dialog from '../../components/Dialog'
 import DepartmentForm from '../../components/forms/DepartmentForm'
 
 export const Route = createLazyFileRoute('/department/')({
-        component: RouteComponent,
+	component: RouteComponent,
 })
 
 function RouteComponent() {
-        const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
-        const [departments, setDepartments] = useState([
-                ...Array.from({ length: 40 }).map((_, i) => ({
-                        name: `User ${i + 1}`,
-                        email: `user${i + 1}@example.com`,
-                        role: "Admin"
-                }))
-        ])
+	const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
+	const [departments, setDepartments] = useState([
+		...Array.from({ length: 40 }).map((_, i) => ({
+			id: i + 1,
+			name: `Department ${i + 1}`,
+		}))
+	])
 
-        return <div className="space-y-6">
-                <div className="page-heading">
-                        <div>
-                                <p className="page-eyebrow">Organization</p>
-                                <h2 className="page-title">Departments</h2>
-                                <p className="page-description">Manage department contacts and leadership from one place.</p>
-                        </div>
+	return <div className="space-y-6">
+		<div className="page-heading">
+			<div>
+				<p className="page-eyebrow">Organization</p>
+				<h2 className="page-title">Departments</h2>
+				<p className="page-description">Manage departments from one place.</p>
+			</div>
 
-                        <button
-                                type="button"
-                                className="primary-btn"
-                                onClick={() => setIsCreateDialogOpen(true)}
-                        >
-                                Create new
-                        </button>
-                </div>
+			<button
+				type="button"
+				className="primary-btn"
+				onClick={() => setIsCreateDialogOpen(true)}
+			>
+				Create new
+			</button>
+		</div>
 
-                <DataTable
-                        columns={[
-                                { key: "name", label: "Name", sortable: true },
-                                { key: "email", label: "Email", sortable: true },
-                                { key: "role", label: "Role" }
-                        ]}
-                        data={departments}
-                        actions={[
-                                () => <button>Edit</button>,
-                                () => <button>Delete</button>
-                        ]}
-                />
+		<DataTable
+			columns={[
+				{ key: "id", label: "ID", sortable: true },
+				{ key: "name", label: "Name", sortable: true },
+			]}
+			data={departments}
+			actions={[
+				() => <button>Edit</button>,
+				() => <button>Delete</button>
+			]}
+		/>
 
-                <Dialog
-                        open={isCreateDialogOpen}
-                        title="Create department"
-                        description="Add a department and assign its primary contact."
-                        onClose={() => setIsCreateDialogOpen(false)}
-                >
-                        <DepartmentForm
-                                onCancel={() => setIsCreateDialogOpen(false)}
-                                onSuccess={() => setIsCreateDialogOpen(false)}
-                                onCreate={department => {
-                                        setDepartments(prev => [department, ...prev])
-                                }}
-                        />
-                </Dialog>
-        </div>
+		<Dialog
+			open={isCreateDialogOpen}
+			title="Create department"
+			description="Add a department."
+			onClose={() => setIsCreateDialogOpen(false)}
+		>
+			<DepartmentForm
+				onCancel={() => setIsCreateDialogOpen(false)}
+				onSuccess={() => setIsCreateDialogOpen(false)}
+				onCreate={department => {
+					setDepartments(prev => [{ ...department, id: prev.length + 1 }, ...prev])
+				}}
+			/>
+		</Dialog>
+	</div>
 }

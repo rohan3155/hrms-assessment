@@ -8,6 +8,7 @@ const DataTableTools = ({ search, setSearch }) => {
                                 placeholder="Search..."
                                 className="border px-3 py-1 rounded"
                         />
+                        
 
                 </div>
         )

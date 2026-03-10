@@ -25,6 +25,7 @@ const sidebarData = [
         },
 ]
 const Sidebar = ({ isOpen, onClose }) => {
+        console.log(isOpen)
         return (
                 <>
                         <button
@@ -44,6 +45,7 @@ const Sidebar = ({ isOpen, onClose }) => {
                                         type="button"
                                         className="sidebar-close-btn"
                                         onClick={onClose}
+                                        hidden={!isOpen}
                                         aria-label="Close navigation menu"
                                 >
                                         <X size={18} />
