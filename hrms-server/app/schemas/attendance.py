@@ -6,23 +6,20 @@ from typing import List, Optional
 class AttendanceCreate(BaseModel):
     employee_id: int
     date: dateType
-    check_in: str
-    check_out: str
+    isCheckedInNow: bool = False
 
 
 class AttendanceUpdate(BaseModel):
-    employee_id: Optional[int] = None
-    date: Optional[dateType] = None
-    check_in: Optional[str] = None
-    check_out: Optional[str] = None
+    status: Optional[str] = None
 
 
 class AttendanceResponse(BaseModel):
     id: int
     employee_id: int
     date: dateType
-    check_in: str
-    check_out: str
+    check_in: Optional[str] = None
+    check_out: Optional[str] = None
+    status: str
 
     class Config:
         from_attributes = True
