@@ -8,7 +8,7 @@ import {
     useCreateDepartment,
     useUpdateDepartment,
     useDeleteDepartment,
-} from "../../api/departments";
+} from "../../api/departments"
 
 export const Route = createLazyFileRoute('/department/')({
 	component: RouteComponent,
@@ -19,24 +19,40 @@ function RouteComponent() {
         isOpen: false,
         mode: "create",
         record: null,
-    });
-    const { data, isLoading, isError } = useDepartments();
-    const createMutation = useCreateDepartment();
-    const updateMutation = useUpdateDepartment();
-    const deleteMutation = useDeleteDepartment();
+    })
 
-    const departments = data?.data || [];
+    // Table state
+    const [search, setSearch] = useState("")
+    const [sortKey, setSortKey] = useState("id")
+    const [sortDir, setSortDir] = useState("asc")
+    const [page, setPage] = useState(1)
+    const pageSize = 10
+
+    const { data, isLoading, isError, refetch } = useDepartments({
+        skip: (page - 1) * pageSize,
+        limit: pageSize,
+        search,
+        sort_by: sortKey,
+        order: sortDir
+    })
+
+    const createMutation = useCreateDepartment()
+    const updateMutation = useUpdateDepartment()
+    const deleteMutation = useDeleteDepartment()
+
+    const departments = data?.data || []
+    const totalCount = data?.total || 0
 
     const closeDialog = () =>
-        setDialogState({ isOpen: false, mode: "create", record: null });
+        setDialogState({ isOpen: false, mode: "create", record: null })
 
 	return (
         <div className="space-y-6">
             <div className="page-heading">
                 <div>
                     <p className="page-eyebrow">Organization</p>
-                    <h2 className="page-title">Departments</h2>
-                    <p className="page-description">
+                    <h2 className="page-title text-zinc-900 dark:text-zinc-100">Departments</h2>
+                    <p className="page-description text-zinc-500 dark:text-zinc-400">
                         Manage departments from one place.
                     </p>
                 </div>
@@ -56,10 +72,8 @@ function RouteComponent() {
                 </button>
             </div>
 
-            {isLoading ? (
-                <p>Loading departments...</p>
-            ) : isError ? (
-                <p>Error loading departments.</p>
+            {isError ? (
+                <p className="text-red-500">Error loading departments.</p>
             ) : (
                 <DataTable
                     columns={[
@@ -67,15 +81,30 @@ function RouteComponent() {
                         { key: "name", label: "Name", sortable: true },
                     ]}
                     data={departments}
+                    isLoading={isLoading}
+                    search={search}
+                    onSearchChange={setSearch}
+                    sortKey={sortKey}
+                    sortDir={sortDir}
+                    onSortChange={(dir, key) => {
+                        setSortDir(dir)
+                        setSortKey(key)
+                    }}
+                    page={page}
+                    onPageChange={setPage}
+                    totalCount={totalCount}
+                    pageSize={pageSize}
+                    onRefresh={refetch}
                     actions={[
                         ({ row }) => (
                             <button
+                                className="text-indigo-600 dark:text-indigo-400 hover:underline"
                                 onClick={() => {
                                     setDialogState({
                                         isOpen: true,
                                         mode: "edit",
                                         record: row,
-                                    });
+                                    })
                                 }}
                             >
                                 Edit
@@ -83,13 +112,14 @@ function RouteComponent() {
                         ),
                         ({ row }) => (
                             <button
+                                className="text-red-600 dark:text-red-400 hover:underline"
                                 onClick={() => {
                                     if (
                                         window.confirm(
                                             "Are you sure you want to delete this department?",
                                         )
                                     ) {
-                                        deleteMutation.mutate(row.id);
+                                        deleteMutation.mutate(row.id)
                                     }
                                 }}
                             >
@@ -124,15 +154,15 @@ function RouteComponent() {
                             {
                                 onSuccess: closeDialog,
                             },
-                        );
+                        )
                     }}
                     onCreate={(department) => {
                         createMutation.mutate(department, {
                             onSuccess: closeDialog,
-                        });
+                        })
                     }}
                 />
             </Dialog>
         </div>
-    );
+    )
 }

@@ -8,37 +8,71 @@ import {
     useCreateAttendance,
     useUpdateAttendance,
     useDeleteAttendance,
-} from "../../api/attendances";
+} from "../../api/attendances"
 
 export const Route = createLazyFileRoute('/attendance/')({
 	component: RouteComponent,
 })
+
+// Format a backend ISO datetime string like "2026-03-10T08:16:32.482705" 
+// to a localized readable format "Mar 10, 2026, 8:16 AM"
+const formatDateTime = (isoString) => {
+    if (!isoString) return "—"
+    try {
+        const date = new Date(isoString)
+        return new Intl.DateTimeFormat('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true
+        }).format(date)
+    } catch(e) {
+        return isoString
+    }
+}
 
 function RouteComponent() {
 	const [dialogState, setDialogState] = useState({
         isOpen: false,
         mode: "create",
         record: null,
-    });
-    const [apiError, setApiError] = useState(null);
+    })
+    const [apiError, setApiError] = useState(null)
 
-    const { data, isLoading, isError } = useAttendances();
-    const createMutation = useCreateAttendance();
-    const updateMutation = useUpdateAttendance();
-    const deleteMutation = useDeleteAttendance();
+    // Table state
+    const [search, setSearch] = useState("")
+    const [sortKey, setSortKey] = useState("id")
+    const [sortDir, setSortDir] = useState("desc")
+    const [page, setPage] = useState(1)
+    const pageSize = 10
 
-    const attendances = data?.data || [];
+    const { data, isLoading, isError, refetch } = useAttendances({
+        skip: (page - 1) * pageSize,
+        limit: pageSize,
+        search,
+        sort_by: sortKey,
+        order: sortDir
+    })
+
+    const createMutation = useCreateAttendance()
+    const updateMutation = useUpdateAttendance()
+    const deleteMutation = useDeleteAttendance()
+
+    const attendances = data?.data || []
+    const totalCount = data?.total || 0
 
     const closeDialog = () =>
-        setDialogState({ isOpen: false, mode: "create", record: null });
+        setDialogState({ isOpen: false, mode: "create", record: null })
 
     return (
         <div className="space-y-6">
             <div className="page-heading">
                 <div>
                     <p className="page-eyebrow">Organization</p>
-                    <h2 className="page-title">Attendance</h2>
-                    <p className="page-description">
+                    <h2 className="page-title text-zinc-900 dark:text-zinc-100">Attendance</h2>
+                    <p className="page-description text-zinc-500 dark:text-zinc-400">
                         Manage employee attendance and shifts from one place.
                     </p>
                 </div>
@@ -47,12 +81,12 @@ function RouteComponent() {
                     type="button"
                     className="primary-btn"
                     onClick={() => {
-                        setApiError(null);
+                        setApiError(null)
                         setDialogState({
                             isOpen: true,
                             mode: "create",
                             record: null,
-                        });
+                        })
                     }}
                 >
                     Log attendance
@@ -61,45 +95,90 @@ function RouteComponent() {
 
             {apiError && <p className="text-red-500 mb-4">{apiError}</p>}
 
-            {isLoading ? (
-                <p>Loading attendance records...</p>
-            ) : isError ? (
-                <p>Error loading attendance records.</p>
+            {isError ? (
+                <p className="text-red-500">Error loading attendance records.</p>
             ) : (
                 <DataTable
                     columns={[
                         { key: "employee_id", label: "Emp ID", sortable: true },
-                        { key: "date", label: "Date", sortable: true },
-                        { key: "check_in", label: "Check In" },
-                        { key: "check_out", label: "Check Out" },
-                        { key: "status", label: "Status" },
+                        { 
+                            key: "date", 
+                            label: "Date", 
+                            sortable: true,
+                            render: (row) => {
+                                // Just format the YYYY-MM-DD cleanly using Date. UTC prevents off-by-1 timezone errors.
+                                const [y, m, d] = row.date.split('-')
+                                return new Date(y, m - 1, d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric'}) 
+                            }
+                        },
+                        { 
+                            key: "check_in", 
+                            label: "Check In",
+                            sortable: true,
+                            render: (row) => formatDateTime(row.check_in)
+                        },
+                        { 
+                            key: "check_out", 
+                            label: "Check Out",
+                            sortable: true,
+                            render: (row) => formatDateTime(row.check_out)
+                        },
+                        { 
+                            key: "status", 
+                            label: "Status",
+                            sortable: true,
+                            render: (row) => (
+                                <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border ${
+                                    row.status === 'checked-in' ? 'bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800' :
+                                    row.status === 'checked-out' ? 'bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800' :
+                                    'bg-zinc-100 text-zinc-800 border-zinc-200 dark:bg-zinc-800 dark:text-zinc-400 dark:border-zinc-700'
+                                }`}>
+                                    {row.status}
+                                </span>
+                            )
+                        },
                     ]}
                     data={attendances}
+                    isLoading={isLoading}
+                    search={search}
+                    onSearchChange={setSearch}
+                    sortKey={sortKey}
+                    sortDir={sortDir}
+                    onSortChange={(dir, key) => {
+                        setSortDir(dir)
+                        setSortKey(key)
+                    }}
+                    page={page}
+                    onPageChange={setPage}
+                    totalCount={totalCount}
+                    pageSize={pageSize}
+                    onRefresh={refetch}
                     actions={[
                         ({ row }) => (
                             <button
+                                className="text-indigo-600 dark:text-indigo-400 hover:underline"
                                 onClick={() => {
-                                    setApiError(null);
+                                    setApiError(null)
                                     setDialogState({
                                         isOpen: true,
                                         mode: "edit",
                                         record: row,
-                                    });
+                                    })
                                 }}
                             >
-                                Edit Status
+                                Edit
                             </button>
                         ),
                         ({ row }) => (
                             <button
+                                className="text-red-600 dark:text-red-400 hover:underline"
                                 onClick={() => {
-                                    console.log(row);
                                     if (
                                         window.confirm(
                                             "Are you sure you want to delete this attendance record?",
                                         )
                                     ) {
-                                        deleteMutation.mutate(row.id);
+                                        deleteMutation.mutate(row.id)
                                     }
                                 }}
                             >
@@ -135,19 +214,19 @@ function RouteComponent() {
                                 onSuccess: closeDialog,
                                 onError: (error) => setApiError(error.message),
                             },
-                        );
+                        )
                     }}
                     onCreate={(attendance) => {
                         createMutation.mutate(attendance, {
                             onSuccess: closeDialog,
                             onError: (error) => {
-                                setApiError(error.message);
-                                closeDialog();
+                                setApiError(error.message)
+                                closeDialog()
                             },
-                        });
+                        })
                     }}
                 />
             </Dialog>
         </div>
-    );
+    )
 }

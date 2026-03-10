@@ -2,9 +2,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 
 const API_BASE = 'http://localhost:8000'
 
-// Fetchers
-export const getAttendances = async ({ skip = 0, limit = 100, search = '' }) => {
-	const params = new URLSearchParams({ skip, limit })
+
+export const getAttendances = async ({ skip = 0, limit = 10, search = '', sort_by = 'id', order = 'asc' }) => {
+	const params = new URLSearchParams({ skip, limit, sort_by, order })
 	if (search) params.append('search', search)
 
 	const res = await fetch(`${API_BASE}/attendances/?${params.toString()}`)
@@ -46,6 +46,8 @@ export const deleteAttendance = async (id) => {
 	return true
 }
 
+import { toast } from 'sonner'
+
 // Hooks
 export const useAttendances = (params = {}) => {
 	return useQuery({
@@ -60,7 +62,11 @@ export const useCreateAttendance = () => {
 		mutationFn: createAttendance,
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ['attendances'] })
+			toast.success('Attendance record created successfully')
 		},
+		onError: (error) => {
+			toast.error(error.message || 'Failed to create attendance record')
+		}
 	})
 }
 
@@ -70,7 +76,11 @@ export const useUpdateAttendance = () => {
 		mutationFn: updateAttendance,
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ['attendances'] })
+			toast.success('Attendance updated successfully')
 		},
+		onError: (error) => {
+			toast.error(error.message || 'Failed to update attendance record')
+		}
 	})
 }
 
@@ -80,6 +90,10 @@ export const useDeleteAttendance = () => {
 		mutationFn: deleteAttendance,
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ['attendances'] })
+			toast.success('Attendance record deleted successfully')
 		},
+		onError: (error) => {
+			toast.error(error.message || 'Failed to delete attendance record')
+		}
 	})
 }

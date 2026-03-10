@@ -2,9 +2,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 
 const API_BASE = 'http://localhost:8000'
 
-// Fetchers
-export const getDepartments = async ({ skip = 0, limit = 100, search = '' }) => {
-	const params = new URLSearchParams({ skip, limit })
+export const getDepartments = async ({ skip = 0, limit = 10, search = '', sort_by = 'id', order = 'asc' }) => {
+	const params = new URLSearchParams({ skip, limit, sort_by, order })
 	if (search) params.append('search', search)
 
 	const res = await fetch(`${API_BASE}/departments/?${params.toString()}`)
@@ -40,6 +39,8 @@ export const deleteDepartment = async (id) => {
 	return true
 }
 
+import { toast } from 'sonner'
+
 // Hooks
 export const useDepartments = (params = {}) => {
 	return useQuery({
@@ -54,7 +55,11 @@ export const useCreateDepartment = () => {
 		mutationFn: createDepartment,
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ['departments'] })
+			toast.success('Department created successfully')
 		},
+		onError: (error) => {
+			toast.error(error.message || 'Failed to create department')
+		}
 	})
 }
 
@@ -64,7 +69,11 @@ export const useUpdateDepartment = () => {
 		mutationFn: updateDepartment,
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ['departments'] })
+			toast.success('Department updated successfully')
 		},
+		onError: (error) => {
+			toast.error(error.message || 'Failed to update department')
+		}
 	})
 }
 
@@ -74,6 +83,10 @@ export const useDeleteDepartment = () => {
 		mutationFn: deleteDepartment,
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ['departments'] })
+			toast.success('Department deleted successfully')
 		},
+		onError: (error) => {
+			toast.error(error.message || 'Failed to delete department')
+		}
 	})
 }

@@ -2,9 +2,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 
 const API_BASE = 'http://localhost:8000'
 
-// Fetchers
-export const getEmployees = async ({ skip = 0, limit = 100, search = '' }) => {
-	const params = new URLSearchParams({ skip, limit })
+export const getEmployees = async ({ skip = 0, limit = 10, search = '', sort_by = 'id', order = 'asc' }) => {
+	const params = new URLSearchParams({ skip, limit, sort_by, order })
 	if (search) params.append('search', search)
 
 	const res = await fetch(`${API_BASE}/employees/?${params.toString()}`)
@@ -40,6 +39,8 @@ export const deleteEmployee = async (id) => {
 	return true
 }
 
+import { toast } from 'sonner'
+
 // Hooks
 export const useEmployees = (params = {}) => {
 	return useQuery({
@@ -54,7 +55,11 @@ export const useCreateEmployee = () => {
 		mutationFn: createEmployee,
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ['employees'] })
+			toast.success('Employee created successfully')
 		},
+		onError: (error) => {
+			toast.error(error.message || 'Failed to create employee')
+		}
 	})
 }
 
@@ -64,7 +69,11 @@ export const useUpdateEmployee = () => {
 		mutationFn: updateEmployee,
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ['employees'] })
+			toast.success('Employee updated successfully')
 		},
+		onError: (error) => {
+			toast.error(error.message || 'Failed to update employee')
+		}
 	})
 }
 
@@ -74,6 +83,10 @@ export const useDeleteEmployee = () => {
 		mutationFn: deleteEmployee,
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: ['employees'] })
+			toast.success('Employee deleted successfully')
 		},
+		onError: (error) => {
+			toast.error(error.message || 'Failed to delete employee')
+		}
 	})
 }

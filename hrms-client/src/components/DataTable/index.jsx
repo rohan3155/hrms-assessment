@@ -1,88 +1,79 @@
-import { useState, useMemo, Activity } from "react"
 import DataTableHeader from "./DataTableHeader"
 import DataTableFooter from "./DataTableFooter"
 import DataTableBody from "./DataTableBody"
 import DataTableTools from "./DataTableTools"
 
-const DataTable = ({ columns, data, actions }) => {
-        const [search, setSearch] = useState("")
-        const [sortKey, setSortKey] = useState(null)
-        const [sortDir, setSortDir] = useState("asc")
-        const [page, setPage] = useState(1)
-        const pageSize = 10
+const DataTable = ({ 
+	columns, 
+	data, 
+	actions, 
+	isLoading,
+	// Pushed up states
+	search,
+	onSearchChange,
+	sortKey,
+	sortDir,
+	onSortChange,
+	page,
+	onPageChange,
+	totalCount,
+	pageSize = 10,
+	onRefresh
+}) => {
+	const handleSort = key => {
+		if (sortKey === key) {
+			onSortChange(sortDir === "asc" ? "desc" : "asc", key)
+		} else {
+			onSortChange("asc", key)
+		}
+	}
 
+	return (
+		<div className="w-full border rounded-lg overflow-hidden bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 shadow-sm relative">
+			<DataTableTools
+				search={search}
+				setSearch={(newSearch) => {
+					onSearchChange(newSearch)
+					// Reset page back to 1 when searching
+					onPageChange(1)
+				}}
+				onRefresh={onRefresh}
+			/>
 
-        const filtered = useMemo(() => {
-                let rows = [...data]
+			{/* Translucent overlay disabled state when loading new data but preserving old data skeleton heights */}
+			{isLoading && data?.length > 0 && (
+				<div className="absolute inset-0 top-[69px] bottom-[53px] bg-white/50 dark:bg-black/20 z-10 flex items-center justify-center backdrop-blur-[1px]">
+					<div className="w-6 h-6 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+				</div>
+			)}
 
-                if (search) {
-                        rows = rows.filter(row =>
-                                Object.values(row).join(" ").toLowerCase().includes(search.toLowerCase())
-                        )
-                }
+			<div className="overflow-x-auto min-h-[300px]">
+				<table className="w-full text-left border-collapse">
+					<DataTableHeader
+						columns={columns}
+						onSort={handleSort}
+						sortKey={sortKey}
+						sortDir={sortDir}
+					/>
 
-                if (sortKey) {
-                        rows.sort((a, b) => {
-                                if (a[sortKey] > b[sortKey]) return sortDir === "asc" ? 1 : -1
-                                if (a[sortKey] < b[sortKey]) return sortDir === "asc" ? -1 : 1
-                                return 0
-                        })
-                }
+					<DataTableBody
+						columns={columns}
+						rows={data}
+						actions={actions}
+						// If we don't have existing rows and are loading, show skeletons
+						isLoading={isLoading && (!data || data.length === 0)}
+					/>
+				</table>
+			</div>
 
-                return rows
-        }, [data, search, sortKey, sortDir])
-
-        const handleSort = key => {
-                if (sortKey === key) {
-                        setSortDir(prev => prev === "asc" ? "desc" : "asc")
-                } else {
-                        setSortKey(key)
-                        setSortDir("asc")
-                }
-        }
-        const paginatedRows = useMemo(() => {
-                const start = (page - 1) * pageSize
-                return filtered.slice(start, start + pageSize)
-        }, [filtered, page])
-
-        return (
-                <Activity fallback={<div className="p-6">Loading table...</div>}>
-
-                        <div className="w-full border rounded-lg overflow-hidden">
-
-                                <DataTableTools
-                                        search={search}
-                                        setSearch={setSearch}
-                                />
-
-                                <table className="w-full">
-
-                                        <DataTableHeader
-                                                columns={columns}
-                                                onSort={handleSort}
-                                                sortKey={sortKey}
-                                                sortDir={sortDir}
-                                        />
-
-                                        <DataTableBody
-                                                columns={columns}
-                                                rows={paginatedRows}
-                                                actions={actions}
-                                        />
-
-                                </table>
-
-                                <DataTableFooter
-                                        count={filtered.length}
-                                        page={page}
-                                        pageSize={pageSize}
-                                        setPage={setPage}
-                                />
-
-                        </div>
-
-                </Activity>
-        )
+			<DataTableFooter
+				count={totalCount}
+				page={page}
+				pageSize={pageSize}
+				setPage={onPageChange}
+			/>
+		</div>
+	)
 }
 
 export default DataTable
