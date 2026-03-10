@@ -1,19 +1,39 @@
 import { createLazyFileRoute } from '@tanstack/react-router'
+import { useState } from 'react'
 import DataTable from '../../components/DataTable'
+import Dialog from '../../components/Dialog'
+import DepartmentForm from '../../components/forms/DepartmentForm'
 
 export const Route = createLazyFileRoute('/department/')({
         component: RouteComponent,
 })
 
 function RouteComponent() {
-        const users = [
+        const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
+        const [departments, setDepartments] = useState([
                 ...Array.from({ length: 40 }).map((_, i) => ({
                         name: `User ${i + 1}`,
                         email: `user${i + 1}@example.com`,
                         role: "Admin"
                 }))
-        ]
-        return <div>
+        ])
+
+        return <div className="space-y-6">
+                <div className="page-heading">
+                        <div>
+                                <p className="page-eyebrow">Organization</p>
+                                <h2 className="page-title">Departments</h2>
+                                <p className="page-description">Manage department contacts and leadership from one place.</p>
+                        </div>
+
+                        <button
+                                type="button"
+                                className="primary-btn"
+                                onClick={() => setIsCreateDialogOpen(true)}
+                        >
+                                Create new
+                        </button>
+                </div>
 
                 <DataTable
                         columns={[
@@ -21,11 +41,26 @@ function RouteComponent() {
                                 { key: "email", label: "Email", sortable: true },
                                 { key: "role", label: "Role" }
                         ]}
-                        data={users}
+                        data={departments}
                         actions={[
-                                ({ row }) => <button>Edit</button>,
-                                ({ row }) => <button>Delete</button>
+                                () => <button>Edit</button>,
+                                () => <button>Delete</button>
                         ]}
                 />
+
+                <Dialog
+                        open={isCreateDialogOpen}
+                        title="Create department"
+                        description="Add a department and assign its primary contact."
+                        onClose={() => setIsCreateDialogOpen(false)}
+                >
+                        <DepartmentForm
+                                onCancel={() => setIsCreateDialogOpen(false)}
+                                onSuccess={() => setIsCreateDialogOpen(false)}
+                                onCreate={department => {
+                                        setDepartments(prev => [department, ...prev])
+                                }}
+                        />
+                </Dialog>
         </div>
 }
