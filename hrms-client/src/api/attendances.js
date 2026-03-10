@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 
-const API_BASE = 'http://localhost:8000'
+const API_BASE = import.meta.env.VITE_API_BASE_URL;
 
 
 export const getAttendances = async ({ skip = 0, limit = 10, search = '', sort_by = 'id', order = 'asc' }) => {
