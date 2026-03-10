@@ -5,13 +5,16 @@ import {
         QueryClientProvider,
 } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
+import Dashboard from '../layout/Dashboard'
 
 const queryClient = new QueryClient()
 const RootLayout = () => (
         <>
-                
+
                 <QueryClientProvider client={queryClient}>
-                        <Outlet />
+                        <Dashboard>
+                                <Outlet />
+                        </Dashboard>
                         <ReactQueryDevtools initialIsOpen={false} />
                 </QueryClientProvider>
                 <TanStackRouterDevtools />
