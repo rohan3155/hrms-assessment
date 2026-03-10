@@ -8,7 +8,9 @@ const initialState = {
 	success: false,
 }
 
-const DepartmentForm = ({ onCreate, onCancel, onSuccess }) => {
+const DepartmentForm = ({ initialData, onUpdate, onCreate, onCancel, onSuccess }) => {
+	const isEditMode = !!initialData;
+
 	const [state, formAction] = useActionState((_, formData) => {
 		const name = formData.get("name")?.toString().trim() ?? ""
 
@@ -20,9 +22,11 @@ const DepartmentForm = ({ onCreate, onCancel, onSuccess }) => {
 			}
 		}
 
-		onCreate({
-			name,
-		})
+		if (isEditMode) {
+			onUpdate({ name })
+		} else {
+			onCreate({ name })
+		}
 
 		return {
 			...initialState,
@@ -36,13 +40,16 @@ const DepartmentForm = ({ onCreate, onCancel, onSuccess }) => {
 		}
 	}, [onSuccess, state.success])
 
+	// Prioritize component state values if they exist, otherwise fallback to initialData
+	const defaultName = state.values?.name ?? initialData?.name ?? "";
+
 	return (
 		<form action={formAction} className="form-stack">
 			<FormField
 				label="Department name"
 				name="name"
 				placeholder="Ex: HR, Finance, Marketing"
-				defaultValue={state.values?.name}
+				defaultValue={defaultName}
 				required
 			/>
 
@@ -52,7 +59,9 @@ const DepartmentForm = ({ onCreate, onCancel, onSuccess }) => {
 				<button type="button" className="secondary-btn" onClick={onCancel}>
 					Cancel
 				</button>
-				<SubmitButton pendingLabel="Creating...">Create department</SubmitButton>
+				<SubmitButton pendingLabel={isEditMode ? "Saving..." : "Creating..."}>
+					{isEditMode ? "Save Changes" : "Create department"}
+				</SubmitButton>
 			</div>
 		</form>
 	)

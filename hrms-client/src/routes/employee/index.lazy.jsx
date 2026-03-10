@@ -1,68 +1,144 @@
-import { createLazyFileRoute } from '@tanstack/react-router'
-import { useState } from 'react'
-import DataTable from '../../components/DataTable'
-import Dialog from '../../components/Dialog'
-import EmployeeForm from '../../components/forms/EmployeeForm'
+import { createLazyFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
+import DataTable from "../../components/DataTable";
+import Dialog from "../../components/Dialog";
+import EmployeeForm from "../../components/forms/EmployeeForm";
+import {
+    useEmployees,
+    useCreateEmployee,
+    useUpdateEmployee,
+    useDeleteEmployee,
+} from "../../api/employees";
 
-export const Route = createLazyFileRoute('/employee/')({
-	component: RouteComponent,
-})
+export const Route = createLazyFileRoute("/employee/")({
+    component: RouteComponent,
+});
 
 function RouteComponent() {
-	const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
-	const [employees, setEmployees] = useState([
-		...Array.from({ length: 40 }).map((_, i) => ({
-			employee_id: 1000 + i + 1,
-			full_name: `Employee ${i + 1}`,
-			email: `employee${i + 1}@example.com`,
-			department_id: (i % 5) + 1
-		}))
-	])
+    const [dialogState, setDialogState] = useState({
+        isOpen: false,
+        mode: "create",
+        record: null,
+    });
+    const { data, isLoading, isError } = useEmployees();
+    const createMutation = useCreateEmployee();
+    const updateMutation = useUpdateEmployee();
+    const deleteMutation = useDeleteEmployee();
 
-	return <div className="space-y-6">
-		<div className="page-heading">
-			<div>
-				<p className="page-eyebrow">Organization</p>
-				<h2 className="page-title">Employees</h2>
-				<p className="page-description">Manage employees and their details from one place.</p>
-			</div>
+    const employees = data?.data || [];
 
-			<button
-				type="button"
-				className="primary-btn"
-				onClick={() => setIsCreateDialogOpen(true)}
-			>
-				Create new
-			</button>
-		</div>
+    const closeDialog = () =>
+        setDialogState({ isOpen: false, mode: "create", record: null });
 
-		<DataTable
-			columns={[
-				{ key: "employee_id", label: "Emp ID", sortable: true },
-				{ key: "full_name", label: "Full Name", sortable: true },
-				{ key: "email", label: "Email", sortable: true },
-				{ key: "department_id", label: "Dept ID" }
-			]}
-			data={employees}
-			actions={[
-				() => <button>Edit</button>,
-				() => <button>Delete</button>
-			]}
-		/>
+    return (
+        <div className="space-y-6">
+            <div className="page-heading">
+                <div>
+                    <p className="page-eyebrow">Organization</p>
+                    <h2 className="page-title">Employees</h2>
+                    <p className="page-description">
+                        Manage employees and their details from one place.
+                    </p>
+                </div>
 
-		<Dialog
-			open={isCreateDialogOpen}
-			title="Create employee"
-			description="Add a new employee to the organization."
-			onClose={() => setIsCreateDialogOpen(false)}
-		>
-			<EmployeeForm
-				onCancel={() => setIsCreateDialogOpen(false)}
-				onSuccess={() => setIsCreateDialogOpen(false)}
-				onCreate={employee => {
-					setEmployees(prev => [employee, ...prev])
-				}}
-			/>
-		</Dialog>
-	</div>
+                <button
+                    type="button"
+                    className="primary-btn"
+                    onClick={() =>
+                        setDialogState({
+                            isOpen: true,
+                            mode: "create",
+                            record: null,
+                        })
+                    }
+                >
+                    Create new
+                </button>
+            </div>
+
+            {isLoading ? (
+                <p>Loading employees...</p>
+            ) : isError ? (
+                <p>Error loading employees.</p>
+            ) : (
+                <DataTable
+                    columns={[
+                        { key: "employee_id", label: "Emp ID", sortable: true },
+                        {
+                            key: "full_name",
+                            label: "Full Name",
+                            sortable: true,
+                        },
+                        { key: "email", label: "Email", sortable: true },
+                        { key: "department_id", label: "Dept ID" },
+                    ]}
+                    data={employees}
+                    actions={[
+                        ({ row }) => (
+                            <button
+                                onClick={() => {
+                                    setDialogState({
+                                        isOpen: true,
+                                        mode: "edit",
+                                        record: row,
+                                    });
+                                }}
+                            >
+                                Edit
+                            </button>
+                        ),
+                        ({ row }) => (
+                            <button
+                                onClick={() => {
+                                    if (
+                                        window.confirm(
+                                            "Are you sure you want to delete this employee?",
+                                        )
+                                    ) {
+                                        deleteMutation.mutate(row.id);
+                                    }
+                                }}
+                            >
+                                Delete
+                            </button>
+                        ),
+                    ]}
+                />
+            )}
+
+            <Dialog
+                open={dialogState.isOpen}
+                title={
+                    dialogState.mode === "edit"
+                        ? "Edit employee"
+                        : "Create employee"
+                }
+                description={
+                    dialogState.mode === "edit"
+                        ? "Update the details of this employee."
+                        : "Add a new employee to the organization."
+                }
+                onClose={closeDialog}
+            >
+                <EmployeeForm
+                    initialData={dialogState.record}
+                    onCancel={closeDialog}
+                    onSuccess={closeDialog}
+                    onUpdate={(updateData) => {
+                        updateMutation.mutate(
+                            { id: dialogState.record.id, data: updateData },
+                            {
+                                onSuccess: closeDialog,
+                            },
+                        );
+                    }}
+                    onCreate={(employee) => {
+                        createMutation.mutate(employee, {
+                            onSuccess: closeDialog,
+                        });
+                    }}
+                />
+            </Dialog>
+        </div>
+    );
 }
