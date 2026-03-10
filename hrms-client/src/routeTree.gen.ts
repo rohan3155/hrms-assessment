@@ -8,35 +8,74 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
+import { createFileRoute } from '@tanstack/react-router'
+
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+
+const EmployeeIndexLazyRouteImport = createFileRoute('/employee/')()
+const DepartmentIndexLazyRouteImport = createFileRoute('/department/')()
+const AttendanceIndexLazyRouteImport = createFileRoute('/attendance/')()
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const EmployeeIndexLazyRoute = EmployeeIndexLazyRouteImport.update({
+  id: '/employee/',
+  path: '/employee/',
+  getParentRoute: () => rootRouteImport,
+} as any).lazy(() =>
+  import('./routes/employee/index.lazy').then((d) => d.Route),
+)
+const DepartmentIndexLazyRoute = DepartmentIndexLazyRouteImport.update({
+  id: '/department/',
+  path: '/department/',
+  getParentRoute: () => rootRouteImport,
+} as any).lazy(() =>
+  import('./routes/department/index.lazy').then((d) => d.Route),
+)
+const AttendanceIndexLazyRoute = AttendanceIndexLazyRouteImport.update({
+  id: '/attendance/',
+  path: '/attendance/',
+  getParentRoute: () => rootRouteImport,
+} as any).lazy(() =>
+  import('./routes/attendance/index.lazy').then((d) => d.Route),
+)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/attendance/': typeof AttendanceIndexLazyRoute
+  '/department/': typeof DepartmentIndexLazyRoute
+  '/employee/': typeof EmployeeIndexLazyRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/attendance': typeof AttendanceIndexLazyRoute
+  '/department': typeof DepartmentIndexLazyRoute
+  '/employee': typeof EmployeeIndexLazyRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/attendance/': typeof AttendanceIndexLazyRoute
+  '/department/': typeof DepartmentIndexLazyRoute
+  '/employee/': typeof EmployeeIndexLazyRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/attendance/' | '/department/' | '/employee/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/attendance' | '/department' | '/employee'
+  id: '__root__' | '/' | '/attendance/' | '/department/' | '/employee/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AttendanceIndexLazyRoute: typeof AttendanceIndexLazyRoute
+  DepartmentIndexLazyRoute: typeof DepartmentIndexLazyRoute
+  EmployeeIndexLazyRoute: typeof EmployeeIndexLazyRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +87,35 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/employee/': {
+      id: '/employee/'
+      path: '/employee'
+      fullPath: '/employee/'
+      preLoaderRoute: typeof EmployeeIndexLazyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/department/': {
+      id: '/department/'
+      path: '/department'
+      fullPath: '/department/'
+      preLoaderRoute: typeof DepartmentIndexLazyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/attendance/': {
+      id: '/attendance/'
+      path: '/attendance'
+      fullPath: '/attendance/'
+      preLoaderRoute: typeof AttendanceIndexLazyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AttendanceIndexLazyRoute: AttendanceIndexLazyRoute,
+  DepartmentIndexLazyRoute: DepartmentIndexLazyRoute,
+  EmployeeIndexLazyRoute: EmployeeIndexLazyRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
