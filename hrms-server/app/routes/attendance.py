@@ -9,7 +9,7 @@ from datetime import datetime, time
 
 router = APIRouter(prefix="/attendances", tags=["attendances"])
 
-@router.get("/attendances/", response_model=AttendancePaginatedResponse)
+@router.get("/", response_model=AttendancePaginatedResponse)
 async def read_attendances(
     skip: int = Query(0, ge=0),
     limit: int = Query(10, ge=1, le=100),
@@ -45,7 +45,7 @@ async def read_attendances(
         "data": attendances
     }
 
-@router.post("/attendances/", response_model=AttendanceResponse)
+@router.post("/", response_model=AttendanceResponse)
 async def create_attendance(attendance: AttendanceCreate, db: Session = Depends(get_db)):
     current_time = datetime.now().time()
 
@@ -82,14 +82,14 @@ async def create_attendance(attendance: AttendanceCreate, db: Session = Depends(
     return db_attendance
 
 
-@router.get("/attendances/{attendance_id}")
+@router.get("/{attendance_id}")
 async def read_attendance(attendance_id: int, db: Session = Depends(get_db)):
     db_attendance = db.query(Attendance).filter(Attendance.id == attendance_id).first()
     if db_attendance is None:
         raise HTTPException(status_code=404, detail="Attendance not found")
     return db_attendance
 
-@router.patch("/attendances/{attendance_id}")
+@router.patch("/{attendance_id}")
 async def update_attendance(attendance_id: int, attendance: AttendanceUpdate, db: Session = Depends(get_db)):
     db_attendance = db.query(Attendance).filter(Attendance.id == attendance_id).first()
 
@@ -121,7 +121,7 @@ async def update_attendance(attendance_id: int, attendance: AttendanceUpdate, db
 
     return db_attendance
 
-@router.delete("/attendances/{attendance_id}")
+@router.delete("/{attendance_id}")
 async def delete_attendance(attendance_id: int, db: Session = Depends(get_db)):
     db_attendance = db.query(Attendance).filter(Attendance.id == attendance_id).first()
     if db_attendance is None:

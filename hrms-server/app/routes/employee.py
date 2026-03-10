@@ -8,7 +8,7 @@ from typing import Optional, List
 
 router = APIRouter(prefix="/employees", tags=["employees"])
 
-@router.get("/employees/", response_model=EmployeePaginatedResponse)
+@router.get("/", response_model=EmployeePaginatedResponse)
 async def read_employees(
     skip: int = Query(0, ge=0),
     limit: int = Query(10, ge=1, le=100),
@@ -43,7 +43,7 @@ async def read_employees(
         "data": employees
     }
 
-@router.post("/employees/", response_model=EmployeeResponse)
+@router.post("/", response_model=EmployeeResponse)
 async def create_employee(employee: EmployeeCreate, db: Session = Depends(get_db)):
     print(employee)
     db_employee = Employee(**employee.dict())
@@ -52,14 +52,14 @@ async def create_employee(employee: EmployeeCreate, db: Session = Depends(get_db
     db.refresh(db_employee)
     return db_employee
 
-@router.get("/employees/{employee_id}")
+@router.get("/{employee_id}")
 async def read_employee(employee_id: int, db: Session = Depends(get_db)):
     db_employee = db.query(Employee).filter(Employee.id == employee_id).first()
     if db_employee is None:
         raise HTTPException(status_code=404, detail="Employee not found")
     return db_employee
 
-@router.patch("/employees/{employee_id}")
+@router.patch("/{employee_id}")
 async def update_employee(employee_id: int, employee: EmployeeUpdate, db: Session = Depends(get_db)):
     db_employee = db.query(Employee).filter(Employee.id == employee_id).first()
 
@@ -76,7 +76,7 @@ async def update_employee(employee_id: int, employee: EmployeeUpdate, db: Sessio
 
     return db_employee
 
-@router.delete("/employees/{employee_id}")
+@router.delete("/{employee_id}")
 async def delete_employee(employee_id: int, db: Session = Depends(get_db)):
     db_employee = db.query(Employee).filter(Employee.id == employee_id).first()
     if db_employee is None:

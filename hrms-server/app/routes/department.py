@@ -8,7 +8,7 @@ from typing import Optional, List
 
 router = APIRouter(prefix="/departments", tags=["departments"])
 
-@router.get("/departments/", response_model=DepartmentPaginatedResponse)
+@router.get("/", response_model=DepartmentPaginatedResponse)
 async def read_departments(
     skip: int = Query(0, ge=0),
     limit: int = Query(10, ge=1, le=100),
@@ -38,7 +38,7 @@ async def read_departments(
         "data": departments
     }
 
-@router.post("/departments/", response_model=DepartmentResponse)
+@router.post("/", response_model=DepartmentResponse)
 async def create_department(department: DepartmentCreate, db: Session = Depends(get_db)):
         db_department = Department(**department.dict())
         db.add(db_department)
@@ -46,14 +46,14 @@ async def create_department(department: DepartmentCreate, db: Session = Depends(
         db.refresh(db_department)
         return db_department
 
-@router.get("/departments/{department_id}")
+@router.get("/{department_id}")
 async def read_department(department_id: int, db: Session = Depends(get_db)):
         db_department = db.query(Department).filter(Department.id == department_id).first()
         if db_department is None:
                 raise HTTPException(status_code=404, detail="Department not found")
         return db_department
 
-@router.patch("/departments/{department_id}")
+@router.patch("/{department_id}")
 async def update_department(department_id: int, department: DepartmentUpdate, db: Session = Depends(get_db)):
     db_department = db.query(Department).filter(Department.id == department_id).first()
 
@@ -70,7 +70,7 @@ async def update_department(department_id: int, department: DepartmentUpdate, db
 
     return db_department
 
-@router.delete("/departments/{department_id}")
+@router.delete("/{department_id}")
 async def delete_department(department_id: int, db: Session = Depends(get_db)):
         db_department = db.query(Department).filter(Department.id == department_id).first()
         if db_department is None:
